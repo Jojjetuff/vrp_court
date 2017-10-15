@@ -1,3 +1,4 @@
+MySQL = module("vrp_mysql", "MySQL")
 local Tunnel = module("vrp", "lib/Tunnel")
 local Proxy = module("vrp", "lib/Proxy")
 
@@ -7,6 +8,8 @@ vRP = Proxy.getInterface("vRP")
 vRPclient = Tunnel.getInterface("vRP","vRPcourt")
 vRPjailerC = Tunnel.getInterface("vRPcourt","vRPcourt")
 
+--SQL--
+MySQL.createCommand("vRP/setjailtime","update vrp_users set jail=@jail_time WHERE name = @name")
 
 -----------------------------
 
@@ -75,8 +78,28 @@ AddEventHandler('chatMessage', function(source, n, message)
 					line = "Jailed " .. jT .. " minutes by ".. GetPlayerName(source) .." Reason: " .. reason
         				local user_id = tPID --vRP.getUserId({source})
 					vRP.insertPoliceRecord({user_id, line})
+ 					vRPclient.toggleHandcuff(tPID,{})
 					TriggerClientEvent("JP", tPID, jTsecs)
 					TriggerClientEvent('chatMessage', -1, 'JUDGE', { 0, 0, 0 }, GetPlayerName(tPID) ..' jailed for '.. jT ..' minutes')
+				end
+		end
+	elseif cm[1] == "/drag" then
+		print("warrant section...")
+		CancelEvent()
+		if tablelength(cm) > 1 then
+				print ("test 1")
+				local dbPID = tonumber(cm[2])
+				local tPID = vRP.getUserSource({dbPID})
+				if GetPlayerName(tPID) ~= nil then
+					print ("test 2")
+					print("Draging ".. GetPlayerName(tPID).. " - cm entered by ".. GetPlayerName(source))
+					--print("reason: "..reason)
+        				local user_id = tPID --vRP.getUserId({source})
+					--line = "Warrant issed by ".. GetPlayerName(source) .." Details: " .. reason
+					--vRP.insertPoliceRecord({user_id, line})
+					print ("test 3")
+					TriggerClientEvent("DP", tPID)
+					--TriggerClientEvent('chatMessage', -1, 'JUDGE', { 0, 0, 0 }, GetPlayerName(tPID) ..' jailed for '.. jT ..' minutes')
 				end
 		end
 	elseif cm[1] == "/warrant" then
@@ -147,8 +170,21 @@ AddEventHandler('chatMessage', function(source, n, message)
 	end
 end)
 
+
+RegisterServerEvent('court:setJailTime')
+AddEventHandler('court:setJailTime', function(name, jail_time)
+	print("setting jail time to "..jail_time.." for "..name)
+    --MySQL.query("vRP/setjailtime", {name = name},{jail_time=jail_time}) 
+end)
+
 print('vrp_court by mr_cpu_geek (LUA, FXServer, FiveM).')
 print('based on Jailer by Albo1125.')
+
+
+--function vrp.setJailTime(user_id,jail_time)
+	--print("setting jail time to "..jail_time.." for "..user_id)
+--end
+
 function stringsplit(inputstr, sep)
     if sep == nil then
         sep = "%s"
